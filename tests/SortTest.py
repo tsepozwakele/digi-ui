@@ -1,13 +1,20 @@
 import unittest
 from selenium import webdriver
 from pages.sortPage import SortPage
+from selenium.webdriver.chrome.options import Options
 
 class SortTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.driver = webdriver.Chrome()
-        cls.driver.maximize_window()
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu") 
+
+        cls.driver = webdriver.Chrome(options=chrome_options)
+        cls.driver.set_window_size(1920, 1080)
         cls.page = SortPage(cls.driver)
 
     def test_sorting(self):
