@@ -1,0 +1,66 @@
+name: Python Selenium with Frontend
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  selenium-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      selenium:
+        image: selenium/standalone-chrome
+        ports:
+          - 4444:4444
+        options: >-
+          --shm-size 2g
+
+    steps:
+      - name: Checkout test repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Clone Frontend Project
+        run: |
+          git clone https://github.com/MindfulMichaelJames/star-wars.git ./frontend
+
+      - name: Install & Build Frontend
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
+
+      - name: Start Frontend in Background
+        working-directory: ./frontend
+        run: |
+          nohup npm start > app.log 2>&1 &
+
+      - name: Wait for Frontend to Start
+        run: |
+          echo "Waiting for frontend to boot..."
+          until curl --silent http://localhost:3000 > /dev/null; do
+            sleep 2
+          done
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Selenium Tests
+        env:
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
+        run: |
+          python -m init
